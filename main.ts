@@ -2,7 +2,7 @@ import { Plugin, MarkdownView, Modal, App, Notice } from "obsidian";
 
 export default class SecurePromptManager extends Plugin {
   async onload() {
-    console.log("Secure Prompt Manager loaded.");
+    console.log("Prompt Silo loaded.");
 
     this.addCommand({
       id: "add-prompt-entry",
@@ -16,7 +16,7 @@ export default class SecurePromptManager extends Plugin {
   }
 
   onunload() {
-    console.log("Secure Prompt Manager unloaded.");
+    console.log("Prompt Silo unloaded.");
   }
 
   private insertPromptEntry(content: string, metadata: string) {
