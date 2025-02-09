@@ -3,7 +3,7 @@
   "name": "Prompt Silo",
   "version": "1.0.0",
   "minAppVersion": "1.0.0",
-  "author": "Your Name",
-  "description": "A private prompt management system for Obsidian.",
+  "author": "Aritra Ghosh",
+  "description": "private prompt management system",
   "isDesktopOnly": false
 }
