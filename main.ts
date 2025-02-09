@@ -29,6 +29,29 @@ class EncryptionService {
   }
 }
 
+/**
+ * PiiRedactionService performs redaction of PII from text.
+ * It searches for common PII patterns (e.g., email addresses, phone numbers, SSNs)
+ * and replaces them with a redacted placeholder.
+ */
+class PiiRedactionService {
+  static redact(text: string): string {
+    // Redact email addresses.
+    text = text.replace(
+      /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
+      "[REDACTED_EMAIL]"
+    );
+    // Redact phone numbers.
+    text = text.replace(
+      /(\+?\d{1,2}\s?)?(\(?\d{3}\)?[\s.-]?)?\d{3}[\s.-]?\d{4}/g,
+      "[REDACTED_PHONE]"
+    );
+    // Redact US Social Security Numbers (format: XXX-XX-XXXX).
+    text = text.replace(/\b\d{3}-\d{2}-\d{4}\b/g, "[REDACTED_SSN]");
+    return text;
+  }
+}
+
 export default class PromptSilo extends Plugin {
   async onload() {
     console.log("Prompt Silo loaded.");
@@ -71,8 +94,11 @@ export default class PromptSilo extends Plugin {
       return;
     }
 
+    // Redact PII from the prompt content before encryption.
+    const redactedContent = PiiRedactionService.redact(content);
+
     const timestamp = new Date().toISOString();
-    const encryptedContent = EncryptionService.encrypt(content, key);
+    const encryptedContent = EncryptionService.encrypt(redactedContent, key);
     const encryptedMetadata = EncryptionService.encrypt(metadata, key);
 
     // Build the formatted entry.
