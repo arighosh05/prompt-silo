@@ -1,6 +1,16 @@
 import { Plugin, MarkdownView, Modal, App, Notice } from "obsidian";
+import CryptoJS from "crypto-js";
 
-export default class SecurePromptManager extends Plugin {
+// For now, we use a hardcoded encryption key.
+// In a later phase, you can provide this via settings.
+const ENCRYPTION_KEY = "my-hardcoded-key";
+
+// Helper function to encrypt a string using AES-256
+function encryptData(plaintext: string, key: string): string {
+  return CryptoJS.AES.encrypt(plaintext, key).toString();
+}
+
+export default class PromptSilo extends Plugin {
   async onload() {
     console.log("Prompt Silo loaded.");
 
@@ -9,7 +19,7 @@ export default class SecurePromptManager extends Plugin {
       name: "Add Prompt Entry",
       callback: () => {
         new PromptModal(this.app, (content, metadata) => {
-          this.insertPromptEntry(content, metadata);
+          this.insertEncryptedPromptEntry(content, metadata);
         }).open();
       },
     });
@@ -19,7 +29,7 @@ export default class SecurePromptManager extends Plugin {
     console.log("Prompt Silo unloaded.");
   }
 
-  private insertPromptEntry(content: string, metadata: string) {
+  private insertEncryptedPromptEntry(content: string, metadata: string) {
     const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!activeView) {
       new Notice("No active markdown file.");
@@ -28,10 +38,20 @@ export default class SecurePromptManager extends Plugin {
 
     const editor = activeView.editor;
     const timestamp = new Date().toISOString();
-    const entry = `<!-- Prompt Entry -->\n**Content:** ${content}\n**Timestamp:** ${timestamp}\n**Metadata:** ${metadata}\n<!-- End Prompt Entry -->\n`;
+
+    // Encrypt the content and metadata using AES-256.
+    const encryptedContent = encryptData(content, ENCRYPTION_KEY);
+    const encryptedMetadata = encryptData(metadata, ENCRYPTION_KEY);
+
+    // Format the entry to indicate that it contains encrypted data.
+    const entry = `<!-- Encrypted Prompt Entry -->\n` +
+                  `**Timestamp:** ${timestamp}\n` +
+                  `**Encrypted Content:** ENC:${encryptedContent}\n` +
+                  `**Encrypted Metadata:** ENC:${encryptedMetadata}\n` +
+                  `<!-- End Encrypted Prompt Entry -->\n`;
 
     editor.replaceSelection(entry);
-    new Notice("Prompt entry added!");
+    new Notice("Encrypted prompt entry added!");
   }
 }
 
@@ -47,9 +67,20 @@ class PromptModal extends Modal {
     const { contentEl } = this;
     contentEl.createEl("h2", { text: "Add Prompt Entry" });
 
-    const promptInput = contentEl.createEl("textarea", { cls: "prompt-input", placeholder: "Enter your prompt here..." });
-    const metadataInput = contentEl.createEl("input", { type: "text", cls: "metadata-input", placeholder: "Metadata (optional)" });
+    // Create textarea for prompt content.
+    const promptInput = contentEl.createEl("textarea", {
+      cls: "prompt-input",
+      placeholder: "Enter your prompt here..."
+    });
+    
+    // Create input for metadata.
+    const metadataInput = contentEl.createEl("input", {
+      type: "text",
+      cls: "metadata-input",
+      placeholder: "Metadata (optional)"
+    });
 
+    // Create submit button.
     const submitBtn = contentEl.createEl("button", { text: "Save Prompt" });
     submitBtn.addEventListener("click", () => {
       const promptContent = promptInput.value.trim();
