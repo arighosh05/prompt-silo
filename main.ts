@@ -1,13 +1,22 @@
 import { Plugin, MarkdownView, Modal, App, Notice } from "obsidian";
 import CryptoJS from "crypto-js";
 
-// For now, we use a hardcoded encryption key.
-// In a later phase, you can provide this via settings.
 const ENCRYPTION_KEY = "my-hardcoded-key";
 
 // Helper function to encrypt a string using AES-256
 function encryptData(plaintext: string, key: string): string {
   return CryptoJS.AES.encrypt(plaintext, key).toString();
+}
+
+// Helper function to decrypt a string using AES-256
+function decryptData(ciphertext: string, key: string): string {
+  try {
+    const bytes = CryptoJS.AES.decrypt(ciphertext, key);
+    return bytes.toString(CryptoJS.enc.Utf8);
+  } catch (error) {
+    console.error("Decryption failed:", error);
+    return "[Decryption Error]";
+  }
 }
 
 export default class PromptSilo extends Plugin {
@@ -21,6 +30,14 @@ export default class PromptSilo extends Plugin {
         new PromptModal(this.app, (content, metadata) => {
           this.insertEncryptedPromptEntry(content, metadata);
         }).open();
+      },
+    });
+
+    this.addCommand({
+      id: "decrypt-prompt-entry",
+      name: "Decrypt Prompt Entry",
+      callback: () => {
+        this.decryptPromptEntry();
       },
     });
   }
@@ -53,6 +70,33 @@ export default class PromptSilo extends Plugin {
     editor.replaceSelection(entry);
     new Notice("Encrypted prompt entry added!");
   }
+
+  private decryptPromptEntry() {
+    const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (!activeView) {
+      new Notice("No active markdown file.");
+      return;
+    }
+
+    const editor = activeView.editor;
+    const fileContent = editor.getValue();
+
+    const regex = /\*\*Encrypted Content:\*\* ENC:(.+)\n\*\*Encrypted Metadata:\*\* ENC:(.+)/g;
+    const matches = [...fileContent.matchAll(regex)];
+
+    if (matches.length === 0) {
+      new Notice("No encrypted prompts found in this file.");
+      return;
+    }
+
+    const decryptedEntries = matches.map(match => {
+      const decryptedContent = decryptData(match[1], ENCRYPTION_KEY);
+      const decryptedMetadata = decryptData(match[2], ENCRYPTION_KEY);
+      return { content: decryptedContent, metadata: decryptedMetadata };
+    });
+
+    new DecryptionModal(this.app, decryptedEntries).open();
+  }
 }
 
 class PromptModal extends Modal {
@@ -72,7 +116,7 @@ class PromptModal extends Modal {
       cls: "prompt-input",
       placeholder: "Enter your prompt here..."
     });
-    
+
     // Create input for metadata.
     const metadataInput = contentEl.createEl("input", {
       type: "text",
@@ -92,6 +136,31 @@ class PromptModal extends Modal {
       } else {
         new Notice("Prompt cannot be empty!");
       }
+    });
+  }
+
+  onClose() {
+    this.contentEl.empty();
+  }
+}
+
+class DecryptionModal extends Modal {
+  private entries: { content: string, metadata: string }[];
+
+  constructor(app: App, entries: { content: string, metadata: string }[]) {
+    super(app);
+    this.entries = entries;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("h2", { text: "Decrypted Prompts" });
+
+    this.entries.forEach(entry => {
+      const entryEl = contentEl.createEl("div", { cls: "decrypted-entry" });
+      entryEl.createEl("p", { text: `Content: ${entry.content}` });
+      entryEl.createEl("p", { text: `Metadata: ${entry.metadata}` });
+      contentEl.createEl("hr");
     });
   }
 
