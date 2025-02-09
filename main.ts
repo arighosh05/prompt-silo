@@ -1,21 +1,31 @@
 import { Plugin, MarkdownView, Modal, App, Notice } from "obsidian";
 import CryptoJS from "crypto-js";
 
-const ENCRYPTION_KEY = "my-hardcoded-key";
+/**
+ * EncryptionService encapsulates key extraction,
+ * encryption, and decryption logic.
+ */
+class EncryptionService {
+  // Extracts the encryption key from a file's content.
+  static extractKey(content: string): string | null {
+    const match = content.match(/^Key\s*=\s*"(.+?)"/m);
+    return match ? match[1] : null;
+  }
 
-// Helper function to encrypt a string using AES-256
-function encryptData(plaintext: string, key: string): string {
-  return CryptoJS.AES.encrypt(plaintext, key).toString();
-}
+  // Encrypts plaintext using AES-256 with the given key.
+  static encrypt(plaintext: string, key: string): string {
+    return CryptoJS.AES.encrypt(plaintext, key).toString();
+  }
 
-// Helper function to decrypt a string using AES-256
-function decryptData(ciphertext: string, key: string): string {
-  try {
-    const bytes = CryptoJS.AES.decrypt(ciphertext, key);
-    return bytes.toString(CryptoJS.enc.Utf8);
-  } catch (error) {
-    console.error("Decryption failed:", error);
-    return "[Decryption Error]";
+  // Decrypts ciphertext using AES-256 with the given key.
+  static decrypt(ciphertext: string, key: string): string {
+    try {
+      const bytes = CryptoJS.AES.decrypt(ciphertext, key);
+      return bytes.toString(CryptoJS.enc.Utf8);
+    } catch (error) {
+      console.error("Decryption failed:", error);
+      return "[Decryption Error]";
+    }
   }
 }
 
@@ -23,22 +33,18 @@ export default class PromptSilo extends Plugin {
   async onload() {
     console.log("Prompt Silo loaded.");
 
+    // Register command to add an encrypted prompt entry.
     this.addCommand({
       id: "add-prompt-entry",
       name: "Add Prompt Entry",
-      callback: () => {
-        new PromptModal(this.app, (content, metadata) => {
-          this.insertEncryptedPromptEntry(content, metadata);
-        }).open();
-      },
+      callback: () => this.openPromptModal(),
     });
 
+    // Register command to decrypt prompt entries.
     this.addCommand({
       id: "decrypt-prompt-entry",
       name: "Decrypt Prompt Entry",
-      callback: () => {
-        this.decryptPromptEntry();
-      },
+      callback: () => this.handleDecryption(),
     });
   }
 
@@ -46,41 +52,55 @@ export default class PromptSilo extends Plugin {
     console.log("Prompt Silo unloaded.");
   }
 
+  // Opens the modal to add a new prompt entry.
+  private openPromptModal() {
+    new PromptModal(this.app, (content, metadata) => {
+      this.insertEncryptedPromptEntry(content, metadata);
+    }).open();
+  }
+
+  // Inserts an encrypted prompt entry into the active Markdown file.
   private insertEncryptedPromptEntry(content: string, metadata: string) {
-    const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (!activeView) {
-      new Notice("No active markdown file.");
+    const editor = this.getActiveEditor();
+    if (!editor) return;
+
+    const fileContent = editor.getValue();
+    const key = EncryptionService.extractKey(fileContent);
+    if (!key) {
+      new Notice("Encryption key not found in file. Add a line like: Key = \"your-key\"");
       return;
     }
 
-    const editor = activeView.editor;
     const timestamp = new Date().toISOString();
+    const encryptedContent = EncryptionService.encrypt(content, key);
+    const encryptedMetadata = EncryptionService.encrypt(metadata, key);
 
-    // Encrypt the content and metadata using AES-256.
-    const encryptedContent = encryptData(content, ENCRYPTION_KEY);
-    const encryptedMetadata = encryptData(metadata, ENCRYPTION_KEY);
-
-    // Format the entry to indicate that it contains encrypted data.
-    const entry = `<!-- Encrypted Prompt Entry -->\n` +
-                  `**Timestamp:** ${timestamp}\n` +
-                  `**Encrypted Content:** ENC:${encryptedContent}\n` +
-                  `**Encrypted Metadata:** ENC:${encryptedMetadata}\n` +
-                  `<!-- End Encrypted Prompt Entry -->\n`;
+    // Build the formatted entry.
+    const entry = [
+      "<!-- Encrypted Prompt Entry -->",
+      `**Timestamp:** ${timestamp}`,
+      `**Encrypted Content:** ENC:${encryptedContent}`,
+      `**Encrypted Metadata:** ENC:${encryptedMetadata}`,
+      "<!-- End Encrypted Prompt Entry -->"
+    ].join("\n") + "\n";
 
     editor.replaceSelection(entry);
     new Notice("Encrypted prompt entry added!");
   }
 
-  private decryptPromptEntry() {
-    const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (!activeView) {
-      new Notice("No active markdown file.");
+  // Decrypts prompt entries from the active Markdown file and displays them.
+  private handleDecryption() {
+    const editor = this.getActiveEditor();
+    if (!editor) return;
+
+    const fileContent = editor.getValue();
+    const key = EncryptionService.extractKey(fileContent);
+    if (!key) {
+      new Notice("Encryption key not found in file.");
       return;
     }
 
-    const editor = activeView.editor;
-    const fileContent = editor.getValue();
-
+    // Regex to capture the encrypted content and metadata.
     const regex = /\*\*Encrypted Content:\*\* ENC:(.+)\n\*\*Encrypted Metadata:\*\* ENC:(.+)/g;
     const matches = [...fileContent.matchAll(regex)];
 
@@ -89,18 +109,31 @@ export default class PromptSilo extends Plugin {
       return;
     }
 
-    const decryptedEntries = matches.map(match => {
-      const decryptedContent = decryptData(match[1], ENCRYPTION_KEY);
-      const decryptedMetadata = decryptData(match[2], ENCRYPTION_KEY);
-      return { content: decryptedContent, metadata: decryptedMetadata };
-    });
+    // Decrypt each entry.
+    const decryptedEntries = matches.map(match => ({
+      content: EncryptionService.decrypt(match[1], key),
+      metadata: EncryptionService.decrypt(match[2], key)
+    }));
 
     new DecryptionModal(this.app, decryptedEntries).open();
   }
+
+  // Helper function to retrieve the active Markdown editor.
+  private getActiveEditor() {
+    const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (!activeView) {
+      new Notice("No active markdown file.");
+      return null;
+    }
+    return activeView.editor;
+  }
 }
 
+/**
+ * PromptModal handles the UI for adding a new prompt entry.
+ */
 class PromptModal extends Modal {
-  onSubmit: (content: string, metadata: string) => void;
+  private onSubmit: (content: string, metadata: string) => void;
 
   constructor(app: App, onSubmit: (content: string, metadata: string) => void) {
     super(app);
@@ -111,20 +144,20 @@ class PromptModal extends Modal {
     const { contentEl } = this;
     contentEl.createEl("h2", { text: "Add Prompt Entry" });
 
-    // Create textarea for prompt content.
+    // Textarea for prompt content.
     const promptInput = contentEl.createEl("textarea", {
       cls: "prompt-input",
       placeholder: "Enter your prompt here..."
     });
 
-    // Create input for metadata.
+    // Input for metadata.
     const metadataInput = contentEl.createEl("input", {
       type: "text",
       cls: "metadata-input",
       placeholder: "Metadata (optional)"
     });
 
-    // Create submit button.
+    // Submit button.
     const submitBtn = contentEl.createEl("button", { text: "Save Prompt" });
     submitBtn.addEventListener("click", () => {
       const promptContent = promptInput.value.trim();
@@ -144,6 +177,9 @@ class PromptModal extends Modal {
   }
 }
 
+/**
+ * DecryptionModal displays the decrypted prompt entries.
+ */
 class DecryptionModal extends Modal {
   private entries: { content: string, metadata: string }[];
 
