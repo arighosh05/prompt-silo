@@ -1,5 +1,5 @@
 <p align="center">
-  Prompt Silo
+# Prompt Silo
 </p>
 
 <p align="center">
