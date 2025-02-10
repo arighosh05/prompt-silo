@@ -16,6 +16,31 @@
 
 ## Installation
 
+### Prerequisites
+
+To install this plugin, you'll need:
+
+- Git installed on your local machine.
+- A local development environment for Node.js.
+
+### Step 1 : Download the Plugin
+
+First, you'll have to download the plugin to the `plugins` directory in your vault's `.obsidian` directory so that Obsidian can find it.
+
+1. Open a terminal window and change the project directory to the `plugins` directory.
+
+`
+cd path/to/vault
+mkdir .obsidian/plugins
+cd .obsidian/plugins
+`
+
+2. Clone the plugin using `Git`.
+
+`
+git clone https://github.com/obsidianmd/obsidian-sample-plugin.git
+`
+
 ## Usage Example
 
 ## Meta
