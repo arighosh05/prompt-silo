@@ -22,7 +22,7 @@ Aritra Ghosh – aritraghosh543@gmail.com
 
 Distributed under the 0BSD license. See `LICENSE` for more information.
 
-[https://github.com/zahash/](https://github.com/zahash/)
+[https://github.com/arighosh05/](https://github.com/arighosh05/)
 
 ## Contributing
 
