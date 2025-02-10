@@ -1,8 +1,39 @@
-/*
+.prompt-modal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.prompt-label {
+  font-weight: bold;
+  margin-top: 8px;
+}
 
-If your plugin does not need CSS, delete this file.
+.prompt-input, .metadata-input, .notes-input, .tags-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--divider-color);
+  border-radius: 5px;
+  background-color: var(--background-primary);
+  font-size: 14px;
+}
 
-*/
+.prompt-input {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.prompt-submit-btn {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  padding: 8px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.prompt-submit-btn:hover {
+  background-color: var(--interactive-accent-hover);
+}
