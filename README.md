@@ -3,9 +3,11 @@
 </p>
 
 <p align="center">
-  a private prompt management system for Obsidian
+  A private prompt management system for Obsidian
 </p>
 
 <p align="center">
-[![License: 0BSD](https://img.shields.io/badge/License-0BSD-purple.svg)](https://opensource.org/license/0bsd)
+  <a href="https://opensource.org/license/0bsd">
+    <img src="https://img.shields.io/badge/License-0BSD-purple.svg" alt="License: 0BSD">
+  </a>
 </p>
