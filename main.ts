@@ -1,4 +1,4 @@
-import { Plugin, MarkdownView, Modal, App, Notice } from "obsidian";
+import { Plugin, MarkdownView, Modal, App, Notice, TFile } from "obsidian";
 import CryptoJS from "crypto-js";
 
 /**
@@ -59,11 +59,29 @@ class PiiRedactionService {
   }
 }
 
+/**
+ * BackupSettingsService extracts backup parameters from the file.
+ * Expect lines like:
+ * BackupEnabled = "true" or "false"
+ * BackupInterval = "X"   (in minutes)
+ */
+class BackupSettingsService {
+  static extractBackupSettings(content: string): { enabled: boolean, interval: number } {
+    const backupEnabledMatch = content.match(/^BackupEnabled\s*=\s*"(.+?)"/m);
+    const backupIntervalMatch = content.match(/^BackupInterval\s*=\s*"(.+?)"/m);
+    const enabled = backupEnabledMatch ? backupEnabledMatch[1].toLowerCase() === "true" : false;
+    const interval = backupIntervalMatch ? parseInt(backupIntervalMatch[1], 10) : 0;
+    return { enabled, interval };
+  }
+}
+
 export default class PromptSilo extends Plugin {
+  private backupIntervalID: number | null = null;
+
   async onload() {
     console.log("Prompt Silo loaded.");
 
-    // Command to add a new prompt entry.
+    // Register command to add a new prompt entry.
     this.addCommand({
       id: "add-prompt-entry",
       name: "Add Prompt Entry",
@@ -83,10 +101,14 @@ export default class PromptSilo extends Plugin {
       name: "Reference Lookup",
       callback: () => this.openReferenceLookupModal(),
     });
+
+    // Schedule automated backups if enabled.
+    this.scheduleBackup();
   }
 
   onunload() {
     console.log("Prompt Silo unloaded.");
+    if (this.backupIntervalID) window.clearInterval(this.backupIntervalID);
   }
 
   // Opens the modal to add a new prompt entry.
@@ -223,6 +245,58 @@ export default class PromptSilo extends Plugin {
       return null;
     }
     return activeView.editor;
+  }
+
+  /**
+   * Schedules automated local backups if enabled.
+   * It reads the backup settings (BackupEnabled and BackupInterval) from the file,
+   * then sets up a setInterval to perform backups every X minutes.
+   */
+  private async scheduleBackup() {
+    const activeFile = this.app.workspace.getActiveFile();
+    if (!activeFile) return;
+
+    try {
+      const content = await this.app.vault.read(activeFile);
+      const backupSettings = BackupSettingsService.extractBackupSettings(content);
+      if (backupSettings.enabled && backupSettings.interval > 0) {
+        // Clear any existing interval.
+        if (this.backupIntervalID) window.clearInterval(this.backupIntervalID);
+        // Schedule backup every X minutes.
+        this.backupIntervalID = window.setInterval(() => {
+          this.performBackup(activeFile);
+        }, backupSettings.interval * 60000);
+        new Notice(`Automated backup enabled: every ${backupSettings.interval} minutes.`);
+      } else {
+        new Notice("Automated backup disabled or interval not set.");
+      }
+    } catch (error) {
+      console.error("Failed to schedule backup:", error);
+    }
+  }
+
+  /**
+   * Performs a backup of the active file by copying its content
+   * to a new file in a dedicated backup folder.
+   */
+  private async performBackup(file: TFile) {
+    try {
+      const content = await this.app.vault.read(file);
+      const backupFolder = "PromptSilo Backups";
+      // Create backup folder if it doesn't exist.
+      const backupFolderFile = this.app.vault.getAbstractFileByPath(backupFolder);
+      if (!backupFolderFile) {
+        await this.app.vault.createFolder(backupFolder);
+      }
+      // Format the timestamp for the backup filename.
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const backupFileName = `${backupFolder}/${file.basename}-Backup-${timestamp}.md`;
+      await this.app.vault.create(backupFileName, content);
+      new Notice(`Backup created: ${backupFileName}`);
+    } catch (error) {
+      console.error("Backup failed:", error);
+      new Notice("Backup failed. See console for details.");
+    }
   }
 }
 
@@ -426,7 +500,7 @@ class EntryDetailsModal extends Modal {
     id: string;
     primaryContent: string;
     primaryMetadata: string;
-    // We already showed reference info in the lookup modal.
+    // Reference info was already shown in the lookup modal.
   };
 
   constructor(app: App, entry: { id: string; primaryContent: string; primaryMetadata: string; }) {
