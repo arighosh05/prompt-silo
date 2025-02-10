@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  **Prompt Silo**
+  <b>Prompt Silo</b>
 </p>
 
 <p align="center">
