@@ -29,7 +29,7 @@ To install this plugin, you'll need:
 
 ### Step 1 : Download the Plugin
 
-First, you'll have to download the plugin to the `plugins` directory in your vault's `.obsidian` directory so that Obsidian can find it.
+First, we'll need to download the plugin to the `plugins` directory in your vault's `.obsidian` directory so that Obsidian can find it.
 
 1. Open a terminal window and change the project directory to the `plugins` directory.
 
