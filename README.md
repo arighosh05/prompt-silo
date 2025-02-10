@@ -46,8 +46,22 @@ git clone https://github.com/arighosh05/prompt-silo.git
 Next, we'll need to compile the plugin so that Obsidian can load it.
 
 1. Navigate to the plugin directory.
+
+```
+cd prompt-silo
+```
+
 2. Install dependencies.
+
+```
+npm install
+```
+
 3. Compile the source code.
+
+```
+npm run build
+```
 
 ### Step 3 : Enable the Plugin
 
