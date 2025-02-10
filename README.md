@@ -41,6 +41,16 @@ cd .obsidian/plugins
 git clone https://github.com/arighosh05/prompt-silo.git
 ```
 
+### Step 2 : Build the Plugin
+
+Next, we'll need to compile the plugin so that Obsidian can load it.
+
+1. Navigate to the plugin directory.
+2. Install dependencies.
+3. Compile the source code.
+
+### Step 3 : Enable the Plugin
+
 ## Usage Example
 
 ## Meta
