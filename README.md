@@ -16,6 +16,8 @@
 
 ## Installation
 
+## Usage Example
+
 ## Meta
 
 Aritra Ghosh – aritraghosh543@gmail.com
