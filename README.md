@@ -1,6 +1,4 @@
-<p align="center">
-# Prompt Silo
-</p>
+<h1 style="text-align: center;">Prompt Silo</h1>
 
 <p align="center">
   <img src="./obsidian_logo.png" alt="logo" width="100">
