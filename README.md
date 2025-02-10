@@ -65,6 +65,13 @@ npm run build
 
 ### Step 3 : Enable the Plugin
 
+Finally, you'll need to enable the plugin to use it in Obsidian.
+
+1. In Obsidian, open Settings.
+2. In the side menu, select Community plugins.
+3. Select Turn on community plugins.
+4. Under Installed plugins, enable Prompt Silo by selecting the toggle button next to it.
+
 ## Usage Example
 
 ## Meta
