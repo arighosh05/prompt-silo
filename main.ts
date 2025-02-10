@@ -314,42 +314,53 @@ class PromptModal extends Modal {
 
   onOpen() {
     const { contentEl } = this;
-    contentEl.createEl("h2", { text: "Add Prompt Entry" });
+    contentEl.empty();
 
-    // Textarea for prompt content.
-    const promptInput = contentEl.createEl("textarea", {
+    // Modal Title
+    contentEl.createEl("h2", { text: "Add New Prompt Entry" });
+
+    // Create form container
+    const formEl = contentEl.createEl("div", { cls: "prompt-modal-container" });
+
+    // Create label and textarea for prompt content
+    formEl.createEl("label", { text: "Prompt Content", cls: "prompt-label" });
+    const promptInput = formEl.createEl("textarea", {
       cls: "prompt-input",
       placeholder: "Enter your prompt here..."
     });
 
-    // Input for metadata.
-    const metadataInput = contentEl.createEl("input", {
+    // Create label and input for metadata
+    formEl.createEl("label", { text: "Metadata (optional)", cls: "prompt-label" });
+    const metadataInput = formEl.createEl("input", {
       type: "text",
       cls: "metadata-input",
-      placeholder: "Metadata (optional)"
+      placeholder: "Enter metadata..."
     });
 
-    // Input for reference notes.
-    const notesInput = contentEl.createEl("input", {
+    // Create label and input for notes
+    formEl.createEl("label", { text: "Reference Notes (visible in lookup)", cls: "prompt-label" });
+    const notesInput = formEl.createEl("input", {
       type: "text",
       cls: "notes-input",
-      placeholder: "Notes (for reference lookup)"
+      placeholder: "Notes for reference lookup"
     });
 
-    // Input for tags (comma-separated, for searching).
-    const tagsInput = contentEl.createEl("input", {
+    // Create label and input for tags
+    formEl.createEl("label", { text: "Tags (comma-separated)", cls: "prompt-label" });
+    const tagsInput = formEl.createEl("input", {
       type: "text",
       cls: "tags-input",
-      placeholder: "Tags (comma-separated)"
+      placeholder: "e.g., security, work, AI"
     });
 
-    // Submit button.
-    const submitBtn = contentEl.createEl("button", { text: "Save Prompt" });
+    // Submit button with proper spacing
+    const submitBtn = formEl.createEl("button", { text: "Save Prompt", cls: "prompt-submit-btn" });
     submitBtn.addEventListener("click", () => {
       const promptContent = promptInput.value.trim();
       const metadataContent = metadataInput.value.trim() || "{}";
       const notesContent = notesInput.value.trim() || "";
       const tagsContent = tagsInput.value.trim() || "";
+
       if (promptContent) {
         this.onSubmit(promptContent, metadataContent, notesContent, tagsContent);
         this.close();
@@ -357,6 +368,8 @@ class PromptModal extends Modal {
         new Notice("Prompt cannot be empty!");
       }
     });
+
+    contentEl.appendChild(formEl);
   }
 
   onClose() {
