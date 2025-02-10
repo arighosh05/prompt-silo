@@ -6,10 +6,17 @@ import CryptoJS from "crypto-js";
  * encryption, and decryption logic.
  */
 class EncryptionService {
-  // Extracts the encryption key from a file's content.
-  static extractKey(content: string): string | null {
-    const match = content.match(/^Key\s*=\s*"(.+?)"/m);
-    return match ? match[1] : null;
+  // Extracts both the primary and secondary keys from the file's content.
+  // Expect lines like:
+  // PrimaryKey = "your-primary-key"
+  // SecondaryKey = "your-secondary-key"
+  static extractKeys(content: string): { primary: string | null, secondary: string | null } {
+    const primaryMatch = content.match(/^PrimaryKey\s*=\s*"(.+?)"/m);
+    const secondaryMatch = content.match(/^SecondaryKey\s*=\s*"(.+?)"/m);
+    return {
+      primary: primaryMatch ? primaryMatch[1] : null,
+      secondary: secondaryMatch ? secondaryMatch[1] : null
+    };
   }
 
   // Encrypts plaintext using AES-256 with the given key.
@@ -31,8 +38,8 @@ class EncryptionService {
 
 /**
  * PiiRedactionService performs redaction of PII from text.
- * It searches for common PII patterns (e.g., email addresses, phone numbers, SSNs)
- * and replaces them with a redacted placeholder.
+ * It searches for common PII patterns (email addresses, phone numbers, SSNs)
+ * and replaces them with a placeholder.
  */
 class PiiRedactionService {
   static redact(text: string): string {
@@ -63,14 +70,14 @@ export default class PromptSilo extends Plugin {
       callback: () => this.openPromptModal(),
     });
 
-    // Command to decrypt all prompt entries.
+    // Command to decrypt full prompt entries (using the primary key).
     this.addCommand({
       id: "decrypt-prompt-entry",
       name: "Decrypt Prompt Entry",
       callback: () => this.handleDecryption(),
     });
 
-    // New command: Reference Lookup.
+    // Command to perform reference lookup (requires the secondary key).
     this.addCommand({
       id: "reference-lookup",
       name: "Reference Lookup",
@@ -91,17 +98,21 @@ export default class PromptSilo extends Plugin {
 
   /**
    * Inserts an encrypted prompt entry into the active Markdown file.
-   * The plaintext reference block includes a unique ID, timestamp, notes, and tags.
-   * The prompt content (redacted for PII) and metadata are encrypted.
+   * - The prompt (after PII redaction) and metadata are encrypted with the primary key.
+   * - A reference block (timestamp, notes, tags) is encrypted with the secondary key.
    */
   private insertEncryptedPromptEntry(content: string, metadata: string, notes: string, tags: string) {
     const editor = this.getActiveEditor();
     if (!editor) return;
 
     const fileContent = editor.getValue();
-    const key = EncryptionService.extractKey(fileContent);
-    if (!key) {
-      new Notice('Encryption key not found in file. Add a line like: Key = "your-key"');
+    const keys = EncryptionService.extractKeys(fileContent);
+    if (!keys.primary) {
+      new Notice('Primary encryption key not found. Add a line like: PrimaryKey = "your-primary-key"');
+      return;
+    }
+    if (!keys.secondary) {
+      new Notice('Secondary encryption key not found. Add a line like: SecondaryKey = "your-secondary-key"');
       return;
     }
 
@@ -110,18 +121,22 @@ export default class PromptSilo extends Plugin {
     const timestamp = new Date().toISOString();
     const uniqueId = Date.now().toString();
 
-    const encryptedContent = EncryptionService.encrypt(redactedContent, key);
-    const encryptedMetadata = EncryptionService.encrypt(metadata, key);
+    // Encrypt the prompt content and metadata using the primary key.
+    const encryptedContent = EncryptionService.encrypt(redactedContent, keys.primary);
+    const encryptedMetadata = EncryptionService.encrypt(metadata, keys.primary);
 
-    // Build the formatted entry with a plaintext reference block.
+    // Build a reference object and encrypt it using the secondary key.
+    const referenceObj = { timestamp, notes, tags };
+    const referenceStr = JSON.stringify(referenceObj);
+    const encryptedReference = EncryptionService.encrypt(referenceStr, keys.secondary);
+
+    // Build the formatted entry.
     const entry = [
       "<!-- Encrypted Prompt Entry -->",
       `**ID:** ${uniqueId}`,
-      `**Timestamp:** ${timestamp}`,
-      `**Tags:** ${tags}`,
-      `**Notes:** ${notes}`,
-      `**Encrypted Content:** ENC:${encryptedContent}`,
-      `**Encrypted Metadata:** ENC:${encryptedMetadata}`,
+      `**Primary Encrypted Content:** ENC:${encryptedContent}`,
+      `**Primary Encrypted Metadata:** ENC:${encryptedMetadata}`,
+      `**Secondary Encrypted Reference:** ENC:${encryptedReference}`,
       "<!-- End Encrypted Prompt Entry -->",
       ""
     ].join("\n");
@@ -131,22 +146,22 @@ export default class PromptSilo extends Plugin {
   }
 
   /**
-   * Decrypts all prompt entries from the active Markdown file and displays them.
-   * (This is a full decryption command; it may be used separately.)
+   * Decrypts prompt entries from the active Markdown file using the primary key
+   * and displays the full decrypted prompt content and metadata.
    */
   private handleDecryption() {
     const editor = this.getActiveEditor();
     if (!editor) return;
 
     const fileContent = editor.getValue();
-    const key = EncryptionService.extractKey(fileContent);
-    if (!key) {
-      new Notice("Encryption key not found in file.");
+    const keys = EncryptionService.extractKeys(fileContent);
+    if (!keys.primary) {
+      new Notice("Primary encryption key not found in file.");
       return;
     }
 
-    // This regex finds the encrypted content and metadata in our new block.
-    const regex = /\*\*Encrypted Content:\*\*\s*ENC:(.+)\n\*\*Encrypted Metadata:\*\*\s*ENC:(.+)/g;
+    // Regex to capture the full block.
+    const regex = /<!-- Encrypted Prompt Entry -->\s*\n\*\*ID:\*\*\s*(.+)\n\*\*Primary Encrypted Content:\*\*\s*ENC:(.+)\n\*\*Primary Encrypted Metadata:\*\*\s*ENC:(.+)\n\*\*Secondary Encrypted Reference:\*\*\s*ENC:(.+)\n<!-- End Encrypted Prompt Entry -->/g;
     const matches = [...fileContent.matchAll(regex)];
 
     if (matches.length === 0) {
@@ -155,27 +170,32 @@ export default class PromptSilo extends Plugin {
     }
 
     const decryptedEntries = matches.map(match => ({
-      content: EncryptionService.decrypt(match[1], key),
-      metadata: EncryptionService.decrypt(match[2], key)
+      id: match[1].trim(),
+      content: EncryptionService.decrypt(match[2].trim(), keys.primary),
+      metadata: EncryptionService.decrypt(match[3].trim(), keys.primary)
     }));
 
     new DecryptionModal(this.app, decryptedEntries).open();
   }
 
-  // Opens the reference lookup modal that allows the user to search by tag.
+  /**
+   * Opens the reference lookup modal.
+   * This uses the secondary key to decrypt the reference block (timestamp, notes, tags)
+   * for each entry. A search input lets the user filter entries by tag.
+   */
   private openReferenceLookupModal() {
     const editor = this.getActiveEditor();
     if (!editor) return;
 
     const fileContent = editor.getValue();
-    const key = EncryptionService.extractKey(fileContent);
-    if (!key) {
-      new Notice("Encryption key not found in file.");
+    const keys = EncryptionService.extractKeys(fileContent);
+    if (!keys.secondary) {
+      new Notice("Secondary encryption key not found in file.");
       return;
     }
 
-    // Regex to capture the plaintext reference information along with encrypted fields.
-    const regex = /<!-- Encrypted Prompt Entry -->\s*\n\*\*ID:\*\*\s*(.+)\n\*\*Timestamp:\*\*\s*(.+)\n\*\*Tags:\*\*\s*(.*)\n\*\*Notes:\*\*\s*(.*)\n\*\*Encrypted Content:\*\*\s*ENC:(.+)\n\*\*Encrypted Metadata:\*\*\s*ENC:(.+)\n<!-- End Encrypted Prompt Entry -->/g;
+    // Use the same regex as above.
+    const regex = /<!-- Encrypted Prompt Entry -->\s*\n\*\*ID:\*\*\s*(.+)\n\*\*Primary Encrypted Content:\*\*\s*ENC:(.+)\n\*\*Primary Encrypted Metadata:\*\*\s*ENC:(.+)\n\*\*Secondary Encrypted Reference:\*\*\s*ENC:(.+)\n<!-- End Encrypted Prompt Entry -->/g;
     const matches = [...fileContent.matchAll(regex)];
 
     if (matches.length === 0) {
@@ -183,16 +203,16 @@ export default class PromptSilo extends Plugin {
       return;
     }
 
+    // For each entry, capture the ID, primary fields (for later detail view),
+    // and the secondary reference block.
     const entries = matches.map(match => ({
       id: match[1].trim(),
-      timestamp: match[2].trim(),
-      tags: match[3].trim(),
-      notes: match[4].trim(),
-      encryptedContent: match[5].trim(),
-      encryptedMetadata: match[6].trim()
+      primaryContent: match[2].trim(),
+      primaryMetadata: match[3].trim(),
+      encryptedReference: match[4].trim()
     }));
 
-    new ReferenceLookupModal(this.app, entries, key).open();
+    new ReferenceLookupModal(this.app, entries, keys.secondary).open();
   }
 
   // Helper function to retrieve the active Markdown editor.
@@ -235,7 +255,7 @@ class PromptModal extends Modal {
       placeholder: "Metadata (optional)"
     });
 
-    // Input for reference notes (will be shown in lookup).
+    // Input for reference notes.
     const notesInput = contentEl.createEl("input", {
       type: "text",
       cls: "notes-input",
@@ -271,13 +291,13 @@ class PromptModal extends Modal {
 }
 
 /**
- * DecryptionModal displays all decrypted prompt entries.
- * (This modal shows only the decrypted content and metadata.)
+ * DecryptionModal displays the decrypted prompt entries.
+ * (This modal shows the decrypted content and metadata using the primary key.)
  */
 class DecryptionModal extends Modal {
-  private entries: { content: string, metadata: string }[];
+  private entries: { id: string, content: string, metadata: string }[];
 
-  constructor(app: App, entries: { content: string, metadata: string }[]) {
+  constructor(app: App, entries: { id: string, content: string, metadata: string }[]) {
     super(app);
     this.entries = entries;
   }
@@ -285,9 +305,9 @@ class DecryptionModal extends Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.createEl("h2", { text: "Decrypted Prompts" });
-
     this.entries.forEach(entry => {
       const entryEl = contentEl.createEl("div", { cls: "decrypted-entry" });
+      entryEl.createEl("p", { text: `ID: ${entry.id}` });
       entryEl.createEl("p", { text: `Content: ${entry.content}` });
       entryEl.createEl("p", { text: `Metadata: ${entry.metadata}` });
       contentEl.createEl("hr");
@@ -300,25 +320,24 @@ class DecryptionModal extends Modal {
 }
 
 /**
- * ReferenceLookupModal allows the user to view the plaintext reference information
- * for each prompt entry (ID, Timestamp, Notes, Tags) and search/filter by tag.
+ * ReferenceLookupModal allows the user to view the reference information for each prompt entry.
+ * The secondary key is used to decrypt the reference block (which is a JSON object containing timestamp, notes, and tags).
+ * A search input lets the user filter entries by tag.
  */
 class ReferenceLookupModal extends Modal {
   private entries: Array<{
     id: string;
-    timestamp: string;
-    tags: string;
-    notes: string;
-    encryptedContent: string;
-    encryptedMetadata: string;
+    primaryContent: string;
+    primaryMetadata: string;
+    encryptedReference: string;
   }>;
-  private encryptionKey: string;
+  private secondaryKey: string;
   private searchQuery: string = "";
 
-  constructor(app: App, entries: Array<{ id: string; timestamp: string; tags: string; notes: string; encryptedContent: string; encryptedMetadata: string; }>, key: string) {
+  constructor(app: App, entries: Array<{ id: string; primaryContent: string; primaryMetadata: string; encryptedReference: string; }>, secondaryKey: string) {
     super(app);
     this.entries = entries;
-    this.encryptionKey = key;
+    this.secondaryKey = secondaryKey;
   }
 
   onOpen() {
@@ -326,7 +345,7 @@ class ReferenceLookupModal extends Modal {
     contentEl.empty();
     contentEl.createEl("h2", { text: "Reference Lookup" });
 
-    // Create a search input for filtering by tags.
+    // Search input for filtering by tag.
     const searchInput = contentEl.createEl("input", {
       type: "text",
       placeholder: "Search by tag...",
@@ -337,24 +356,39 @@ class ReferenceLookupModal extends Modal {
       this.renderEntries();
     });
 
-    // Create a container for the lookup results.
+    // Container for lookup results.
     const resultsContainer = contentEl.createEl("div", { cls: "lookup-results" });
     resultsContainer.id = "lookup-results";
 
-    // Initial render.
     this.renderEntries();
   }
 
-  // Re-render the list of entries according to the current search query.
   private renderEntries() {
     const resultsContainer = this.contentEl.querySelector("#lookup-results");
     if (!resultsContainer) return;
     resultsContainer.innerHTML = "";
 
-    // Filter entries by tag (case-insensitive substring match).
-    const filtered = this.entries.filter(entry => {
-      return entry.tags.toLowerCase().includes(this.searchQuery);
+    // Process each entry: decrypt its secondary reference block.
+    const processed = this.entries.map(entry => {
+      const decryptedRef = EncryptionService.decrypt(entry.encryptedReference, this.secondaryKey);
+      let refObj: { timestamp: string, notes: string, tags: string };
+      try {
+        refObj = JSON.parse(decryptedRef);
+      } catch (err) {
+        refObj = { timestamp: "[Error]", notes: "[Error]", tags: "" };
+      }
+      return {
+        id: entry.id,
+        timestamp: refObj.timestamp,
+        notes: refObj.notes,
+        tags: refObj.tags,
+        primaryContent: entry.primaryContent,
+        primaryMetadata: entry.primaryMetadata
+      };
     });
+
+    // Filter by tag (if search query is provided).
+    const filtered = processed.filter(entry => entry.tags.toLowerCase().includes(this.searchQuery));
 
     if (filtered.length === 0) {
       resultsContainer.createEl("p", { text: "No matching entries found." });
@@ -369,12 +403,11 @@ class ReferenceLookupModal extends Modal {
       entryDiv.createEl("p", { text: `Tags: ${entry.tags}` });
       entryDiv.createEl("p", { text: `Notes: ${entry.notes}` });
 
-      // "View Details" button to open the EntryDetailsModal.
+      // "View Details" button: opens a modal that uses the primary key to decrypt full details.
       const detailsBtn = entryDiv.createEl("button", { text: "View Details" });
       detailsBtn.addEventListener("click", () => {
-        new EntryDetailsModal(this.app, entry, this.encryptionKey).open();
+        new EntryDetailsModal(this.app, entry).open();
       });
-
       entryDiv.createEl("hr");
     });
   }
@@ -385,23 +418,20 @@ class ReferenceLookupModal extends Modal {
 }
 
 /**
- * EntryDetailsModal decrypts and displays the full details of a single prompt entry.
+ * EntryDetailsModal decrypts and displays the full prompt entry details using the primary key.
+ * (It expects that the entry object already contains the primary encrypted content and metadata.)
  */
 class EntryDetailsModal extends Modal {
   private entry: {
     id: string;
-    timestamp: string;
-    tags: string;
-    notes: string;
-    encryptedContent: string;
-    encryptedMetadata: string;
+    primaryContent: string;
+    primaryMetadata: string;
+    // We already showed reference info in the lookup modal.
   };
-  private key: string;
 
-  constructor(app: App, entry: { id: string; timestamp: string; tags: string; notes: string; encryptedContent: string; encryptedMetadata: string; }, key: string) {
+  constructor(app: App, entry: { id: string; primaryContent: string; primaryMetadata: string; }) {
     super(app);
     this.entry = entry;
-    this.key = key;
   }
 
   onOpen() {
@@ -409,13 +439,23 @@ class EntryDetailsModal extends Modal {
     contentEl.empty();
     contentEl.createEl("h2", { text: "Entry Details" });
     contentEl.createEl("p", { text: `ID: ${this.entry.id}` });
-    contentEl.createEl("p", { text: `Timestamp: ${this.entry.timestamp}` });
-    contentEl.createEl("p", { text: `Tags: ${this.entry.tags}` });
-    contentEl.createEl("p", { text: `Notes: ${this.entry.notes}` });
 
-    // Decrypt content and metadata.
-    const decryptedContent = EncryptionService.decrypt(this.entry.encryptedContent, this.key);
-    const decryptedMetadata = EncryptionService.decrypt(this.entry.encryptedMetadata, this.key);
+    // To decrypt, we need to extract the primary key from the active file.
+    const editor = (this.app.workspace.getActiveViewOfType(MarkdownView))?.editor;
+    if (!editor) {
+      contentEl.createEl("p", { text: "No active markdown file." });
+      return;
+    }
+    const fileContent = editor.getValue();
+    const keys = EncryptionService.extractKeys(fileContent);
+    if (!keys.primary) {
+      contentEl.createEl("p", { text: "Primary key not found." });
+      return;
+    }
+
+    const decryptedContent = EncryptionService.decrypt(this.entry.primaryContent, keys.primary);
+    const decryptedMetadata = EncryptionService.decrypt(this.entry.primaryMetadata, keys.primary);
+
     contentEl.createEl("p", { text: `Content: ${decryptedContent}` });
     contentEl.createEl("p", { text: `Metadata: ${decryptedMetadata}` });
   }
