@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  A private prompt management system for Obsidian
+  a private prompt management system for Obsidian
 </p>
 
 <p align="center">
