@@ -20,8 +20,8 @@
 
 To install this plugin, you'll need:
 
-- Git installed on your local machine.
-- A local development environment for Node.js.
+- [Git](https://git-scm.com/) installed on your local machine.
+- A local development environment for [Node.js](https://nodejs.org/).
 
 ### Step 1 : Download the Plugin
 
