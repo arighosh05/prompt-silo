@@ -37,9 +37,9 @@ cd .obsidian/plugins
 
 2. Clone the plugin using `Git`.
 
-`
+```
 git clone https://github.com/obsidianmd/obsidian-sample-plugin.git
-`
+```
 
 ## Usage Example
 
