@@ -199,7 +199,7 @@ Modify the `Seconday Key` to `not-my-secondary-key`. Attempt to access reference
   <img src="./reference_prompt2_image_error.png" alt="image" width="750">
 </p>
 
-Observe that after `BackupInterval` minutes, the prompts are stored in a `.md` file.
+Observe that after `BackupInterval` minutes, the prompts are stored in `Prompts.md` file.
 
 ## Meta
 
