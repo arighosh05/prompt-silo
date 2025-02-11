@@ -94,7 +94,7 @@ BackupInterval = "5"
 Navigate to the command palette via `Ctrl+P` on Windows or `Cmd+P` on macOS. Search for `Prompt Silo: Add Prompt Entry`.
 
 <p align="center">
-  <img src="./add_image.png" alt="add_image" width="200">
+  <img src="./add_image.png" alt="add_image" width="500">
 </p>
 
 ## Meta
