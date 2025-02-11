@@ -69,16 +69,29 @@ npm run build
 
 ### Step 3 : Enable the Plugin
 
-Finally, you'll need to enable the plugin to use it in Obsidian.
+Finally, we'll need to enable the plugin to use it in Obsidian.
 
 1. In Obsidian, open Settings.
 2. In the side menu, select Community plugins.
 3. Select Turn on community plugins.
 4. Under Installed plugins, enable Prompt Silo by selecting the toggle button next to it.
 
-You're now ready to use the Prompt Silo in Obsidian.
+We're now ready to use the Prompt Silo in Obsidian.
 
 ## Usage Example
+
+Follow this tutorial to get familiar with Prompt Silo.
+
+Before all else, navigate to the file you want to store your prompts in and insert the following lines at the top (or anywhere else in the file) with your desired keys and backup settings:
+
+```
+PrimaryKey = "my-primary-key"			
+SecondaryKey = "my-secondary-key"
+BackupEnabled = "true"
+BackupInterval = "5"
+```
+
+`PrimaryKey` encrypts the main content and metadata, while `SecondaryKey` encrypts reference data. `BackupEnabled` toggles automated backups on/off via `"true"` or `false`, and `BackupInterval` refers to the interval (in minutes) between automated backups.
 
 ## Meta
 
