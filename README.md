@@ -80,7 +80,7 @@ We're now ready to use the Prompt Silo in Obsidian.
 
 ## Tutorial
 
-Before all else, navigate to the file you want to store your prompts in and insert the following lines at the top (or anywhere else in the file) with your desired keys and backup settings:
+Navigate to the file you want to store your prompts in and insert the following lines at the top with your desired keys and backup settings:
 
 ```
 PrimaryKey = "my-primary-key"			
