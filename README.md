@@ -125,13 +125,13 @@ Search for `Prompt Silo: Reference Lookup`.
   <img src="./reference_image.png" alt="image" width="750">
 </p>
 
-Since the both keys are intact, the reference lookup displays the reference data via the Secondary Key. 
+The reference lookup is accessible via the `Secondary Key`. 
 
 <p align="center">
   <img src="./reference_prompt1_image.png" alt="image" width="750">
 </p>
 
-Click on `View Details` to access the prompt via the Primary Key.
+Click on `View Details` to access the prompt via the `Primary Key`.
 
 <p align="center">
   <img src="./reference_details_prompt1_image.png" alt="image" width="750">
@@ -145,7 +145,7 @@ Search for `Prompt Silo: Decrypt Prompt Entry`.
   <img src="./decrypt_image.png" alt="image" width="750">
 </p>
 
-Since the Primary Key is intact, the prompts are decrypted via the Primary Key.
+Since the `Primary Key` is intact, the prompts are decrypted via the `Primary Key`.
 
 <p align="center">
   <img src="./decrypted_prompt1_image.png" alt="image" width="750">
@@ -169,13 +169,13 @@ Decrypt the image. Since the prompt contains PII, it is redacted.
   <img src="./decrypted_prompt2_image.png" alt="image" width="750">
 </p>
 
-Modify the Primary Key to `not-my-primary-key`. Attempt to decrypt fails since Primary Key is incorrect.
+Modify the `Primary Key` to `not-my-primary-key`. Attempt to decrypt fails since `Primary Key` is incorrect.
 
 <p align="center">
   <img src="./decrypted_prompt2_image_error.png" alt="image" width="750">
 </p>
 
-Since Secondary Key is intact, reference lookup is available.
+Since `Secondary Key` is intact, reference lookup is available.
 
 <p align="center">
   <img src="./reference_prompt2_image.png" alt="image" width="750">
@@ -187,13 +187,13 @@ Search the tags in the reference lookup.
   <img src="./search_reference_prompt2_image.png" alt="image" width="750">
 </p>
 
-Since Primary Key is incorrect, `View Details` fails.
+Since `Primary Key` is incorrect, `View Details` fails.
 
 <p align="center">
   <img src="./reference_details_prompt2_image_error.png" alt="image" width="750">
 </p>
 
-Modify the Seconday Key to `not-my-secondary-key`. Attemp to access reference lookup fails.
+Modify the `Seconday Key` to `not-my-secondary-key`. Attempt to access reference lookup fails.
 
 <p align="center">
   <img src="./reference_prompt2_image_error.png" alt="image" width="750">
