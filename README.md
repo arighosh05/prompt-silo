@@ -76,6 +76,8 @@ Finally, you'll need to enable the plugin to use it in Obsidian.
 3. Select Turn on community plugins.
 4. Under Installed plugins, enable Prompt Silo by selecting the toggle button next to it.
 
+You're now ready to use the Prompt Silo in Obsidian.
+
 ## Usage Example
 
 ## Meta
