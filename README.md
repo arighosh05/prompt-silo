@@ -91,6 +91,12 @@ BackupInterval = "5"
 
 `PrimaryKey` encrypts the main content and metadata, while `SecondaryKey` encrypts reference data. `BackupEnabled` toggles automated backups on/off via `true`/`false`, and `BackupInterval` refers to the interval, in minutes, between automated backups.
 
+Navigate to the command palette via `Ctrl+P` on Windows or `Cmd+P` on macOS. Search for `Prompt Silo: Add Prompt Entry`.
+
+<p align="center">
+  <img src="./add_image.png" alt="add_image" width="200">
+</p>
+
 ## Meta
 
 Aritra Ghosh – aritraghosh543@gmail.com
