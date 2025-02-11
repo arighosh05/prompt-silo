@@ -193,8 +193,8 @@ export default class PromptSilo extends Plugin {
 
     const decryptedEntries = matches.map(match => ({
       id: match[1].trim(),
-      content: EncryptionService.decrypt(match[2].trim(), keys.primary),
-      metadata: EncryptionService.decrypt(match[3].trim(), keys.primary)
+      content: EncryptionService.decrypt(match[2].trim(), keys.primary!),
+      metadata: EncryptionService.decrypt(match[3].trim(), keys.primary!)
     }));
 
     new DecryptionModal(this.app, decryptedEntries).open();
