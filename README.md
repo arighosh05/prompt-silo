@@ -78,9 +78,7 @@ Finally, we'll need to enable the plugin to use it in Obsidian.
 
 We're now ready to use the Prompt Silo in Obsidian.
 
-## Usage Example
-
-Follow this tutorial to get familiar with Prompt Silo.
+## Tutorial
 
 Before all else, navigate to the file you want to store your prompts in and insert the following lines at the top (or anywhere else in the file) with your desired keys and backup settings:
 
