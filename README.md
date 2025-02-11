@@ -122,19 +122,19 @@ Navigate to the command palette via `Ctrl+P` on Windows or `Cmd+P` on macOS.
 Search for `Prompt Silo: Reference Lookup`.
 
 <p align="center">
-  <img src="./reference_image.png" alt="reference_image" width="750">
+  <img src="./reference_image.png" alt="image" width="750">
 </p>
 
 Since the both keys are intact, the reference lookup displays the reference data via the Secondary Key. 
 
 <p align="center">
-  <img src="./reference_prompt1_image.png" alt="reference_image" width="750">
+  <img src="./reference_prompt1_image.png" alt="image" width="750">
 </p>
 
 Click on `View Details` to access the prompt via the Primary Key.
 
 <p align="center">
-  <img src="./reference_details_prompt1_image.png" alt="reference_image" width="750">
+  <img src="./reference_details_prompt1_image.png" alt="image" width="750">
 </p>
 
 Navigate to the command palette via `Ctrl+P` on Windows or `Cmd+P` on macOS. 
@@ -142,14 +142,64 @@ Navigate to the command palette via `Ctrl+P` on Windows or `Cmd+P` on macOS.
 Search for `Prompt Silo: Decrypt Prompt Entry`.
 
 <p align="center">
-  <img src="./decrypt_image.png" alt="reference_image" width="750">
+  <img src="./decrypt_image.png" alt="image" width="750">
 </p>
 
 Since the Primary Key is intact, the prompts are decrypted via the Primary Key.
 
 <p align="center">
-  <img src="./decrypted_prompt1_image.png" alt="reference_image" width="750">
+  <img src="./decrypted_prompt1_image.png" alt="image" width="750">
 </p>
+
+Add the following prompt entry.
+
+<p align="center">
+  <img src="./add_image_prompt2.png" alt="image" width="750">
+</p>
+
+The encrypted prompt is stored in the file.
+
+<p align="center">
+  <img src="./prompt2_enc.png" alt="image" width="750">
+</p>
+
+Decrypt the image. Since the prompt contains PII, it is redacted.
+
+<p align="center">
+  <img src="./decrypted_prompt2_image.png" alt="image" width="750">
+</p>
+
+Modify the Primary Key to `not-my-primary-key`. Attempt to decrypt fails since Primary Key is incorrect.
+
+<p align="center">
+  <img src="./decrypted_prompt2_image_error.png" alt="image" width="750">
+</p>
+
+Since Secondary Key is intact, reference lookup is available.
+
+<p align="center">
+  <img src="./reference_prompt2_image.png" alt="image" width="750">
+</p>
+
+Search the tags in the reference lookup.
+
+<p align="center">
+  <img src="./search_reference_prompt2_image.png" alt="image" width="750">
+</p>
+
+Since Primary Key is incorrect, `View Details` fails.
+
+<p align="center">
+  <img src="./reference_details_prompt2_image_error.png" alt="image" width="750">
+</p>
+
+Modify the Seconday Key to `not-my-secondary-key`. Attemp to access reference lookup fails.
+
+<p align="center">
+  <img src="./reference_prompt2_image_error.png" alt="image" width="750">
+</p>
+
+Observe that after the `BackupInterval` minutes, the prompts are stored in a `.md` file.
 
 ## Meta
 
