@@ -89,7 +89,7 @@ BackupEnabled = "true"
 BackupInterval = "5"
 ```
 
-`PrimaryKey` encrypts the main content and metadata, while `SecondaryKey` encrypts reference data. `BackupEnabled` toggles automated backups on/off via `true` or `false`, and `BackupInterval` refers to the interval (in minutes) between automated backups.
+`PrimaryKey` encrypts the main content and metadata, while `SecondaryKey` encrypts reference data. `BackupEnabled` toggles automated backups on/off via `true`/`false`, and `BackupInterval` refers to the interval (in minutes) between automated backups.
 
 ## Meta
 
