@@ -86,7 +86,7 @@ Navigate to the file you want to store your prompts in and insert the following 
 PrimaryKey = "my-primary-key"			
 SecondaryKey = "my-secondary-key"
 BackupEnabled = "true"
-BackupInterval = "5"
+BackupInterval = "15"
 ```
 
 `PrimaryKey` encrypts the main content and metadata, while `SecondaryKey` encrypts reference data. `BackupEnabled` toggles automated backups on/off via `true`/`false`, and `BackupInterval` refers to the interval, in minutes, between automated backups.
@@ -108,6 +108,24 @@ Add the entry.
 <p align="center">
   <img src="./add_image_prompt1.png" alt="add_image_prompt1" width="750">
 </p>
+
+The prompt is encrypted and stored in the file.
+
+<p align="center">
+  <img src="./prompt1_enc.png" alt="prompt1_enc" width="750">
+</p>
+
+
+Navigate to the command palette via `Ctrl+P` on Windows or `Cmd+P` on macOS. 
+
+Search for `Prompt Silo: Reference Lookup`.
+
+<p align="center">
+  <img src="./reference_image.png" alt="reference_image" width="750">
+</p>
+
+
+
 
 ## Meta
 
