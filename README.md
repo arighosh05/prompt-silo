@@ -115,7 +115,6 @@ The prompt is encrypted and stored in the file.
   <img src="./prompt1_enc.png" alt="prompt1_enc" width="750">
 </p>
 
-
 Navigate to the command palette via `Ctrl+P` on Windows or `Cmd+P` on macOS. 
 
 Search for `Prompt Silo: Reference Lookup`.
@@ -124,8 +123,17 @@ Search for `Prompt Silo: Reference Lookup`.
   <img src="./reference_image.png" alt="reference_image" width="750">
 </p>
 
+Since the both keys are intact, the reference lookup displays the reference data via the Secondary Key. 
 
+<p align="center">
+  <img src="./reference_prompt1_image.png" alt="reference_image" width="750">
+</p>
 
+Click on `View Details` to access the prompt via the Primary Key.
+
+<p align="center">
+  <img src="./reference_details_prompt1_image.png" alt="reference_image" width="750">
+</p>
 
 ## Meta
 
