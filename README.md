@@ -18,7 +18,7 @@
 
 ## About
 
-**Prompt Silo** is a secure, offline-first prompt management system built to protect the strategic assets of prompt design. Developed as an Obsidian community plugin, it acknowledges that well-crafted prompts are not just text—they are intellectual property, vital assets that offer a distinct competitive advantage in the rapidly growing AI domain. At its core, Prompt Silo is grounded in the belief that our prompts, shaped by countless subtle interactions with artificial intelligence, represent much more than simple queries. They are the digital remnants of our thought processes, creativity, and the ever-evolving relationship we have with technology. In preserving these invaluable artifacts, Prompt Silo ensures they are protected with the highest standards of security.
+**Prompt Silo** is a secure, offline-first prompt management system. At its core, Prompt Silo is grounded in the belief that our prompts, shaped by countless subtle interactions with artificial intelligence, represent much more than simple queries. They are the digital remnants of our thought processes, creativity, and the ever-evolving relationship we have with technology. In preserving these invaluable artifacts, Prompt Silo ensures they are protected with the highest standards of security.
 
 ## Installation
 
